@@ -26,7 +26,7 @@ def index():
 
         def run_srt():
             global srt_instance, shutdown_flag
-            srt_instance = SRT('2292609134', 'rhkr2062!', dpt, arr, dpt_dt, dpt_tm, num_trains_to_check, True)
+            srt_instance = SRT('회원번호', '비밀번호', dpt, arr, dpt_dt, dpt_tm, num_trains_to_check, True)
             srt_instance.login()
             srt_instance.go_search()
             srt_instance.check_result()
