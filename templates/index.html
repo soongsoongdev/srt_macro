@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SRT 예약 시스템</title>
+    <script>
+        function stopSRT() {
+            fetch('/shutdown', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "stopped") {
+                        document.getElementById("status").innerHTML = "SRT 예약 프로세스가 종료되었습니다.";
+                    }
+                });
+        }
+
+        function refreshStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("cnt_refresh").innerHTML = "새로고침 횟수: " + data.cnt_refresh;
+                    if (!data.shutdown_flag) {
+                        setTimeout(refreshStatus, 1000);
+                    }
+                });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            refreshStatus();
+        });
+    </script>
+</head>
+<body>
+<h1>SRT 예약 시스템</h1>
+<form method="POST" action="/">
+    <label for="dpt">출발역:</label>
+    <select name="dpt" id="dpt">
+        {% for station in station_list %}
+        <option value="{{ station }}">{{ station }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label for="arr">도착역:</label>
+    <select name="arr" id="arr">
+        {% for station in station_list %}
+        <option value="{{ station }}">{{ station }}</option>
+        {% endfor %}
+    </select><br>
+
+    <label for="dpt_dt">출발 날짜:</label>
+    <input type="date" name="dpt_dt" value="2024-05-24"><br>
+
+    <label for="dpt_tm">출발 시간:</label>
+        <select name="dpt_tm" id="dpt_tm" class="dropDownNoJqueryUi" title="출발시각 선택">
+            <option value="00">00시 이후</option>
+            <option value="02">02시 이후</option>
+            <option value="04">04시 이후</option>
+            <option value="06">06시 이후</option>
+            <option value="08">08시 이후</option>
+            <option value="10">10시 이후</option>
+            <option value="12">12시 이후</option>
+            <option value="14" selected="selected">14시 이후</option>
+            <option value="16">16시 이후</option>
+            <option value="18">18시 이후</option>
+            <option value="20">20시 이후</option>
+            <option value="22">22시 이후</option>
+        </select>
+        <br/><br/>
+    <label for="num_trains_to_check">조회할 열차 수:</label>
+    <input type="number" name="num_trains_to_check" value="3"><br>
+
+    <button type="submit">예약 시작</button>
+</form>
+<br>
+<button onclick="stopSRT()">예약 종료</button>
+<p id="cnt_refresh">새로고침 횟수: 0</p>
+<p id="status"></p>
+</body>
+</html>
