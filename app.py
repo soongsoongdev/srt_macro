@@ -4,39 +4,56 @@ import threading
 
 app = Flask(__name__)
 
-station_list = ["수서", "동탄", "평택지제", "천안아산", "오송", "대전", "김천(구미)", "동대구",
-                "신경주", "울산(통도사)", "부산", "공주", "익산", "정읍", "광주송정", "나주", "목포"]
+station_list = ["수서", "동탄", "평택지제", "천안아산", "오송", "대전", "김천(구미)", "동대구", "신경주", "울산(통도사)", "부산", "공주", "익산", "정읍", "광주송정", "나주", "목포"]
 
 srt_instance = None
 srt_thread = None
 shutdown_flag = False
 
+# 전역 변수 선언
+dpt = ""
+arr = ""
+dpt_dt = ""
+dpt_tm = ""
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    global dpt, arr, dpt_dt, dpt_tm  # 전역 변수 사용 선언
     if request.method == "POST":
         dpt = request.form["dpt"]
         arr = request.form["arr"]
         dpt_dt = request.form['dpt_dt'].replace("-", "")  # 날짜 형식 변경
         dpt_tm = str(request.form["dpt_tm"])
-        num_trains_to_check = int(request.form['num_trains_to_check'])
+        srt = SRT('', '!', dpt, arr, dpt_dt, dpt_tm, True)
+        srt.login()
+        srt.go_search()
+        train_list = srt.get_train_list()
+        srt.close()
 
-        global srt_instance, srt_thread, shutdown_flag
-        shutdown_flag = False
-
-        def run_srt():
-            global srt_instance, shutdown_flag
-            srt_instance = SRT('회원번호', '비밀번호', dpt, arr, dpt_dt, dpt_tm, num_trains_to_check, True)
-            srt_instance.login()
-            srt_instance.go_search()
-            srt_instance.check_result()
-            srt_instance.close()
-
-        srt_thread = threading.Thread(target=run_srt)
-        srt_thread.start()
-        return render_template("index.html", station_list=station_list, success_message="로그인 및 예약 처리 완료!")
-
+        return render_template('index.html', station_list=station_list, train_list=train_list)
     return render_template('index.html', station_list=station_list)
+
+
+@app.route("/select_trains", methods=["POST"])
+def select_trains():
+    selected_trains = request.form.getlist("selected_trains")
+    selected_trains = list(map(int, selected_trains))
+
+    global srt_instance, srt_thread, dpt, arr, dpt_dt, dpt_tm  # 전역 변수 사용 선언
+
+    def run_srt():
+        global srt_instance
+        print(dpt, dpt_dt, arr, dpt_dt, dpt_tm)
+        srt_instance = SRT('', '!', dpt, arr, dpt_dt, dpt_tm, len(selected_trains), '/Users/macbook/PycharmProjects/SRT/chromedriver',
+                           selected_trains=selected_trains)
+        srt_instance.login()
+        srt_instance.go_search()
+        srt_instance.check_selected_trains()
+        srt_instance.close()
+
+    srt_thread = threading.Thread(target=run_srt)
+    srt_thread.start()
+    return redirect(url_for("index"))  # 예약 시도 후 메인 페이지로 리디렉션
 
 
 @app.route("/shutdown", methods=['POST'])

@@ -66,11 +66,21 @@
             <option value="22">22시 이후</option>
         </select>
         <br/><br/>
-    <label for="num_trains_to_check">조회할 열차 수:</label>
-    <input type="number" name="num_trains_to_check" value="3"><br>
+        <br/><br/>
 
-    <button type="submit">예약 시작</button>
+    <button type="submit">조회하기</button>
 </form>
+
+{% if train_list %}
+    <h2>기차 목록</h2>
+    <form action="/select_trains" method="POST">
+        {% for train in train_list %}
+            <input type="checkbox" name="selected_trains" value="{{ train['index'] }}">{{ train['info'] }}<br>
+        {% endfor %}
+        <input type="submit" value="예약 시작">
+    </form>
+{% endif %}
+
 <br>
 <button onclick="stopSRT()">예약 종료</button>
 <p id="cnt_refresh">새로고침 횟수: 0</p>

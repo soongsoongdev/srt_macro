@@ -14,8 +14,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class SRT:
-    def __init__(self, username, password, dpt_stn, arr_stn, dpt_dt, dpt_tm, num_trains_to_check
-                 , want_reserve, driver_path='/Users/macbook/PycharmProjects/SRT/chromedriver'):
+    def __init__(self, username, password, dpt_stn, arr_stn, dpt_dt, dpt_tm, want_reserve, driver_path='/Users/macbook/PycharmProjects/SRT/chromedriver', selected_trains=None):
         self.username = username
         self.password = password
         self.dpt_stn = dpt_stn
@@ -24,7 +23,7 @@ class SRT:
         self.dpt_tm = dpt_tm
         self.driver_path = driver_path
         self.want_reserve = want_reserve
-        self.num_trains_to_check = num_trains_to_check
+        self.selected_trains = selected_trains if selected_trains is not None else []
         self.driver = None
         self.is_booked = False  # 예약 완료 되었는지 확인용
         self.cnt_refresh = 0  # 새로고침 회수 기록
@@ -85,7 +84,7 @@ class SRT:
 
         print("기차를 조회합니다")
         print(
-            f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후\n{self.num_trains_to_check}개의 기차 중 예약")
+            f"출발역:{self.dpt_stn} , 도착역:{self.arr_stn}\n날짜:{self.dpt_dt}, 시간: {self.dpt_tm}시 이후 예약")
         print(f"예약 대기 사용: {self.want_reserve}")
 
         self.driver.find_element(By.XPATH, "//input[@value='조회하기']").click()
@@ -138,9 +137,29 @@ class SRT:
             self.is_booked = True
             return self.is_booked
 
-    def check_result(self):
+    def stop(self):
+        self.stop_flag = True
+        self.close()
+
+    def close(self):
+        if self.driver:
+            self.driver.quit()
+
+    def get_train_list(self):
+        trains = []
+        for i in range(1, 11):  # 임시로 10개의 기차를 가져옴
+            try:
+                info = self.driver.find_element(By.CSS_SELECTOR,
+                                                f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i})").text
+                trains.append({"index": i, "info": info})
+            except NoSuchElementException:
+                break
+        return trains
+
+
+    def check_selected_trains(self):
         while not self.stop_flag:
-            for i in range(1, self.num_trains_to_check + 1):
+            for i in self.selected_trains:
                 if self.stop_flag:
                     break
                 try:
@@ -152,9 +171,6 @@ class SRT:
                     standard_seat = "매진"
                     reservation = "매진"
                 except NoSuchElementException:
-                    row_element = self.driver.find_element(By.CSS_SELECTOR,
-                                                           f"#result-form > fieldset > div.tbl_wrap.th_thead > table > tbody > tr:nth-child({i})")
-                    print(row_element.text)
                     standard_seat = "매진"
                     reservation = "매진"
 
@@ -170,11 +186,3 @@ class SRT:
             else:
                 time.sleep(randint(2, 4))
                 self.refresh_result()
-
-    def stop(self):
-        self.stop_flag = True
-        self.close()
-
-    def close(self):
-        if self.driver:
-            self.driver.quit()
