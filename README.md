@@ -32,7 +32,7 @@ python app.py
 
 **실행 결과**
 
-![](./img/srt_reservation.png)
+![](./img/srt_reservation2.png)
 
 
 
