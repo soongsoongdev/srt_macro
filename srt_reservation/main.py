@@ -2,7 +2,8 @@ import warnings
 from random import randint
 
 from selenium import webdriver
-from selenium.common import StaleElementReferenceException, ElementClickInterceptedException, NoSuchElementException
+from selenium.common import StaleElementReferenceException, ElementClickInterceptedException, NoSuchElementException, \
+    UnexpectedAlertPresentException
 from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -108,16 +109,20 @@ class SRT:
                     Keys.ENTER)
             finally:
                 self.driver.implicitly_wait(3)
+            try:
+                # 예약이 성공하면
+                if self.driver.find_elements(By.ID, 'isFalseGotoMain'):
+                    self.is_booked = True
+                    print("예약 성공")
+                    return self.driver
+                else:
+                    print("잔여석 없음. 다시 검색")
+                    self.driver.back()  # 뒤로가기
+                    self.driver.implicitly_wait(5)
+            except UnexpectedAlertPresentException as err:
+                print(err)
+                print("선택하신 열차는 SRT 2개 편성을 연결하여 운행하는 열차로서, 반드시 열차번호와 해당호차를 확인하시고 승차하시기 바랍니다.")
 
-            # 예약이 성공하면
-            if self.driver.find_elements(By.ID, 'isFalseGotoMain'):
-                self.is_booked = True
-                print("예약 성공")
-                return self.driver
-            else:
-                print("잔여석 없음. 다시 검색")
-                self.driver.back()  # 뒤로가기
-                self.driver.implicitly_wait(5)
 
     def refresh_result(self):
         if self.stop_flag:
