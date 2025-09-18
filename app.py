@@ -44,12 +44,16 @@ def select_trains():
     def run_srt():
         global srt_instance
         print(dpt, dpt_dt, arr, dpt_dt, dpt_tm)
-        srt_instance = SRT('', '!', dpt, arr, dpt_dt, dpt_tm, len(selected_trains), '/Users/macbook/PycharmProjects/SRT/chromedriver',
+        srt_instance = SRT('2499463546', 'nanacorn99!', dpt, arr, dpt_dt, dpt_tm, len(selected_trains), '/Users/gaehyun/Documents/project/srt_macro/chromedriver',
                            selected_trains=selected_trains)
         srt_instance.login()
         srt_instance.go_search()
+
+        print("조회된 열차:")
+        for t in srt_instance.get_train_list():
+            print(t)
+
         srt_instance.check_selected_trains()
-        srt_instance.close()
 
     srt_thread = threading.Thread(target=run_srt)
     srt_thread.start()
